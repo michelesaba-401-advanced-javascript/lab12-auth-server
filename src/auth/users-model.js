@@ -20,18 +20,6 @@ users.pre('save', function(next) {
     .catch(console.error);
 });
 
-users.statics.authenticateBasic = function(auth) {
-  let query = {username:auth.username};
-  return this.findOne(query)
-    .then( user => user && user.comparePassword(auth.password) )
-    .catch(error => {throw error;});
-};
-
-users.methods.comparePassword = function(password) {
-  return bcrypt.compare( password, this.password )
-    .then( valid => valid ? this : null);
-};
-
 users.statics.createFromOauth = function(email) {
 
   if(! email) { return Promise.reject('Validation Error'); }
@@ -51,11 +39,25 @@ users.statics.createFromOauth = function(email) {
 
 };
 
+users.statics.authenticateBasic = function(auth) {
+  let query = {username:auth.username};
+  return this.findOne(query)
+    .then( user => user && user.comparePassword(auth.password) )
+    .catch(error => {throw error;});
+};
+
+users.methods.comparePassword = function(password) {
+  return bcrypt.compare( password, this.password )
+    .then( valid => valid ? this : null);
+};
+
 users.methods.generateToken = function() {
+  
   let token = {
     id: this._id,
     role: this.role,
   };
+  
   return jwt.sign(token, process.env.SECRET);
 };
 
