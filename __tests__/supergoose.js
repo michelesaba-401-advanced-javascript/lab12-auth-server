@@ -39,9 +39,9 @@ supergoose.startDB = async () => {
 /**
  * Typically used in Jest afterAll hook
  */
-supergoose.stopDB = () => {
-  mongoose.disconnect();
-  mongoServer.stop();
+supergoose.stopDB = async () => {
+  await mongoose.disconnect();
+  await mongoServer.stop();
 };
 
 // Just so that it can live in the tests folder

@@ -28,6 +28,19 @@ users.pre("save", function(next) {
     });
 });
 
+users.statics.authenticateToken = async function(token) {
+  try {
+    let parsedToken = jwt.verify(token, process.env.SECRET || "changeit");
+    console.log(parsedToken);
+    let query = { _id: parsedToken.id };
+    return this.findOne(query);
+    
+  } catch (err) {
+    console.log('authentiateToken error!', err);
+    return null;
+  }
+};
+
 users.statics.authenticateBasic = function(auth) {
   let query = { username: auth.username };
   return this.findOne(query)

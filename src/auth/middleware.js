@@ -1,13 +1,11 @@
 "use strict";
 
-const User = require("./users-model.js");
+const User = require("./users-model");
 
 module.exports = (req, res, next) => {
   if (!req.headers.authorization) return _authError();
 
-  let [authType, authString] = req.headers.authorization.split(/\s+/);
-
-  // BASIC Auth  ... Authorization:Basic ZnJlZDpzYW1wbGU=
+  let [authType, authString] = req.headers.authorization.split(" ");
 
   switch (authType.toLowerCase()) {
     case "basic":
@@ -19,25 +17,27 @@ module.exports = (req, res, next) => {
   }
 
   function _authenticate(user) {
-    if (user) {
-      req.user = user;
-      req.token = user.generateToken();
-      next();
-    } else {
-      _authError();
-    }
+    if (!user) return _authError();
+
+    req.user = user;
+    req.token = user.generateToken();
+    console.log({ token: req.token });
+    next();
   }
 
   async function _authBearer(token) {
-    let user = await User._authenticateToken(token);
+    console.log('authBearer', token);
+    let user = await User.authenticateToken(token);
+    console.log('found user with token', user); 
     await _authenticate(user);
   }
-  
-  function _authBasic(authString) {
-    let base64Buffer = Buffer.from(authString, "base64"); // <Buffer 01 02...>
-    let bufferString = base64Buffer.toString(); // john:mysecret
-    let [username, password] = bufferString.split(":"); // variables username="john" and password="mysecret"
-    let auth = { username, password }; // {username:"john", password:"mysecret"}
+
+  function _authBasic(authBase64String) {
+    let base64Buffer = Buffer.from(authBase64String, "base64");
+    let authString = base64Buffer.toString();
+    console.log({ base64Buffer, authString });
+    let [username, password] = authString.split(":");
+    let auth = { username, password };
 
     return User.authenticateBasic(auth).then(user => _authenticate(user));
   }
@@ -49,5 +49,4 @@ module.exports = (req, res, next) => {
       message: "Invalid Username/Password"
     });
   }
-  console.log("I RAN FOR SOME REASTON");
 };
